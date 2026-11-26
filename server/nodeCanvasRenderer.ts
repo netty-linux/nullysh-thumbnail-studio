@@ -73,7 +73,7 @@ async function loadExternalOrDataImage(sourceUrl: string | null): Promise<Canvas
   const trimmed = sourceUrl.trim();
 
   try {
-    if (trimmed.startsWith('data:image/')) {
+    if (trimmed.startsWith('data:image/') || trimmed.startsWith('data:application/octet-stream')) {
       const commaIdx = trimmed.indexOf(',');
       if (commaIdx === -1) return null;
       const meta = trimmed.slice(0, commaIdx);
@@ -84,11 +84,18 @@ async function loadExternalOrDataImage(sourceUrl: string | null): Promise<Canvas
       return await loadImage(buf);
     }
 
+    if (/^(iVBOR|\/9j\/|UklGR)/.test(trimmed)) {
+      return await loadImage(Buffer.from(trimmed, 'base64'));
+    }
+
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 12000);
       try {
-        const res = await fetch(trimmed, { signal: controller.signal });
+        const res = await fetch(trimmed, {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'NullyshThumbnailStudio/1.0' },
+        });
         if (!res.ok) return null;
         const arrayBuf = await res.arrayBuffer();
         return await loadImage(Buffer.from(arrayBuf));
@@ -2126,6 +2133,7 @@ function drawExtraImage(
 export interface NodeRenderResult {
   buffer: Buffer;
   base64: string;
+  previewBase64: string;
   previewDataUrl: string;
   mimeType: 'image/png' | 'image/webp';
   width: number;
@@ -2318,10 +2326,13 @@ export async function renderThumbnailNode(
   pCtx.drawImage(canvas, 0, 0, previewW, previewH);
   const previewBuf = await previewCanvas.encode('webp', 80);
 
+  const previewBase64 = previewBuf.toString('base64');
+
   return {
     buffer,
     base64: buffer.toString('base64'),
-    previewDataUrl: `data:image/webp;base64,${previewBuf.toString('base64')}`,
+    previewBase64,
+    previewDataUrl: `data:image/webp;base64,${previewBase64}`,
     mimeType,
     width: targetW,
     height: targetH,

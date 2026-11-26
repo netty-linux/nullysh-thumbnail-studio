@@ -33,7 +33,7 @@ export interface StoredGenerationMeta {
   config: ThumbnailConfig;
 }
 
-const MAX_ITEMS = 30;
+const MAX_ITEMS = 20;
 const store: StoredGeneration[] = [];
 
 export function saveGeneration(

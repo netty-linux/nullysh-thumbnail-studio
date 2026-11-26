@@ -115,7 +115,7 @@ export const GenerateThumbnailInputShape = {
   chromeIntensity: z.number().min(0.2).max(1.8).optional().describe('Intensidade do brilho metálico especular'),
   subtitle: z.string().optional().describe('Subtítulo exibido na faixa de papel rasgado creme'),
   showSubtitle: z.boolean().optional(),
-  tags: z.array(z.string()).max(4).optional().describe('Até 4 tags curtas na pílula translúcida'),
+  tags: z.array(z.string()).optional().describe('Até 4 tags curtas na pílula translúcida'),
   showTags: z.boolean().optional(),
   badgeText: z.string().optional().describe('Texto do selo de canto superior (ex: Nullysh Shop, PACK IA)'),
   showBadge: z.boolean().optional(),
@@ -129,7 +129,6 @@ export const GenerateThumbnailInputShape = {
   extraImage: ExtraImageInputSchema.optional().describe('Segunda imagem posicionada livremente em qualquer X/Y'),
   y2kStickers: z
     .array(Y2KStickerInputSchema)
-    .max(12)
     .optional()
     .describe('Lista de stickers Y2K cromados (estrela 3D, coração, CD, raio, órbita, etc.)'),
   clickbait: ClickbaitInputSchema.optional().describe('Controles de dopamina visual e clickbait'),
@@ -150,7 +149,7 @@ export function buildThumbnailConfigFromInput(input: GenerateThumbnailInput): Th
 
   const turboPatch = input.turboClickbait ? CLICKBAIT_TURBO_PATCH : {};
 
-  const y2kStickers: Y2KStickerItem[] = (input.y2kStickers ?? []).map((s, idx) => ({
+  const y2kStickers: Y2KStickerItem[] = (input.y2kStickers ?? []).slice(0, 12).map((s, idx) => ({
     id: `mcp-sticker-${idx}-${randomUUID().slice(0, 6)}`,
     type: s.type,
     x: s.x,
@@ -177,7 +176,7 @@ export function buildThumbnailConfigFromInput(input: GenerateThumbnailInput): Th
       DEFAULT_CONFIG.chromeIntensity,
     subtitle: input.subtitle ?? basePreset.subtitle ?? DEFAULT_CONFIG.subtitle,
     showSubtitle: input.showSubtitle ?? basePreset.showSubtitle ?? DEFAULT_CONFIG.showSubtitle,
-    tags: input.tags ?? basePreset.tags ?? DEFAULT_CONFIG.tags,
+    tags: (input.tags ?? basePreset.tags ?? DEFAULT_CONFIG.tags).slice(0, 4),
     showTags: input.showTags ?? basePreset.showTags ?? DEFAULT_CONFIG.showTags,
     badgeText: input.badgeText ?? basePreset.badgeText ?? DEFAULT_CONFIG.badgeText,
     showBadge: input.showBadge ?? basePreset.showBadge ?? DEFAULT_CONFIG.showBadge,
@@ -424,8 +423,8 @@ export function createNullyshMcpServer(getBaseUrl: () => string): McpServer {
         content: [
           {
             type: 'image',
-            data: rendered.base64,
-            mimeType: rendered.mimeType,
+            data: rendered.previewBase64,
+            mimeType: 'image/webp',
           },
           {
             type: 'text',
@@ -528,8 +527,8 @@ export function createNullyshMcpServer(getBaseUrl: () => string): McpServer {
         content: [
           {
             type: 'image',
-            data: rendered.base64,
-            mimeType: rendered.mimeType,
+            data: rendered.previewBase64,
+            mimeType: 'image/webp',
           },
           {
             type: 'text',
@@ -597,12 +596,14 @@ export function createNullyshMcpServer(getBaseUrl: () => string): McpServer {
         };
       }
       const meta = toGenerationMeta(item, getBaseUrl());
+      const previewBase64 = item.previewDataUrl.split(',')[1] ?? item.buffer.toString('base64');
+      const previewMime = item.previewDataUrl.startsWith('data:image/webp') ? 'image/webp' : item.mimeType;
       return {
         content: [
           {
             type: 'image',
-            data: item.buffer.toString('base64'),
-            mimeType: item.mimeType,
+            data: previewBase64,
+            mimeType: previewMime,
           },
           {
             type: 'text',
