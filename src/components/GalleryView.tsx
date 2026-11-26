@@ -1,7 +1,8 @@
 import React from 'react';
-import { Copy, Download, Trash2, Layers } from 'lucide-react';
+import { Copy, Download, Layers, Plus, Trash2 } from 'lucide-react';
 import { ASPECT_RATIOS } from '../data/presets';
 import type { SavedThumbnailItem } from '../types/thumbnail';
+import { Button, Tooltip } from './ui/StudioPrimitives';
 
 interface GalleryViewProps {
   items: SavedThumbnailItem[];
@@ -33,57 +34,55 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
 }) => {
   if (items.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8 min-h-[calc(100vh-57px)] studio-grid-bg">
-        <div className="max-w-md w-full text-center space-y-4 p-8 rounded-xl bg-[#13151B] border border-white/10">
-          <div className="w-11 h-11 rounded-lg bg-[#7C3AED]/15 border border-[#7C3AED]/30 flex items-center justify-center mx-auto">
-            <Layers className="w-5 h-5 text-[#A78BFA]" />
+      <div className="flex-1 flex items-center justify-center p-8 min-h-[calc(100vh-48px)] studio-grid-bg">
+        <div className="max-w-sm w-full text-center space-y-4 p-8 rounded-[var(--radius-lg)] bg-[var(--bg-panel)] border border-[var(--border-subtle)] shadow-[var(--shadow-soft)]">
+          <div className="w-11 h-11 rounded-[var(--radius-md)] bg-[var(--accent-soft)] border border-[var(--accent-border)] flex items-center justify-center mx-auto">
+            <Layers className="w-5 h-5 text-[var(--accent-text)]" />
           </div>
           <div className="space-y-1.5">
-            <h2 className="text-lg font-semibold text-white">
+            <h1 className="text-base font-semibold text-[var(--text-primary)] tracking-[-0.015em]">
               Nenhuma thumbnail salva ainda
-            </h2>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Suas últimas artes criadas ficam salvas localmente no navegador para duplicar e reutilizar configurações rapidamente.
+            </h1>
+            <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
+              Salve suas artes no estúdio com Ctrl+S para duplicar, exportar ou reutilizar
+              configurações em um clique.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onGoToStudio}
-            className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors cursor-pointer"
-          >
-            Criar primeira thumbnail
-          </button>
+          <Button variant="primary" size="lg" onClick={onGoToStudio} className="w-full">
+            <Plus className="w-4 h-4" />
+            <span>Criar primeira thumbnail</span>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-57px)] studio-grid-bg p-6 lg:p-10 overflow-y-auto">
-      <div className="max-w-[1200px] mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+    <div className="flex-1 min-h-[calc(100vh-48px)] studio-grid-bg p-6 lg:p-8 overflow-y-auto studio-scroll">
+      <div className="max-w-[1240px] mx-auto space-y-6">
+        <div className="flex items-end justify-between gap-4 border-b border-[var(--border-subtle)] pb-4">
           <div>
-            <h2 className="text-xl font-semibold text-white tracking-tight">
+            <h1 className="text-xl font-semibold text-[var(--text-primary)] tracking-[-0.02em]">
               Últimas criadas
-            </h2>
-            <p className="text-sm text-slate-400 mt-0.5">
-              Clique em reutilizar para carregar qualquer configuração no estúdio.
+            </h1>
+            <p className="text-[13px] text-[var(--text-muted)] mt-1">
+              Abra qualquer arte salva no estúdio para editar ou exportar novamente em 2x.
             </p>
           </div>
-          <span className="text-xs text-slate-400 font-mono tabular-nums">
+          <span className="text-xs text-[var(--text-muted)] font-mono tabular-nums shrink-0">
             {items.length} {items.length === 1 ? 'arte salva' : 'artes salvas'}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {items.map((item) => {
-            const spec = ASPECT_RATIOS[item.config.aspectRatio];
+            const spec = ASPECT_RATIOS[item.config.aspectRatio] ?? ASPECT_RATIOS['16:9'];
             return (
               <article
                 key={item.id}
-                className="flex flex-col bg-[#13151B] border border-white/10 rounded-xl overflow-hidden"
+                className="flex flex-col bg-[var(--bg-panel)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] rounded-[var(--radius-lg)] overflow-hidden transition-colors duration-150"
               >
-                <div className="aspect-video bg-[#090A0D] flex items-center justify-center overflow-hidden border-b border-white/8">
+                <div className="aspect-video bg-[var(--bg-app)] flex items-center justify-center overflow-hidden border-b border-[var(--border-subtle)]">
                   <img
                     src={item.previewDataUrl}
                     alt={item.name}
@@ -94,11 +93,11 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
 
                 <div className="p-4 flex-1 flex flex-col justify-between gap-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-white truncate">
+                    <h2 className="text-[13px] font-semibold text-[var(--text-primary)] truncate">
                       {item.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-1 font-mono tabular-nums">
-                      <span>{spec.label}</span>
+                    </h2>
+                    <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)] mt-1 font-mono tabular-nums">
+                      <span className="text-[var(--text-secondary)]">{spec.label}</span>
                       <span aria-hidden="true">·</span>
                       <span>
                         {spec.width}×{spec.height}
@@ -108,35 +107,39 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/8">
-                    <button
-                      type="button"
+                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-[var(--border-subtle)]">
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => onLoadItem(item)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors cursor-pointer whitespace-nowrap"
+                      className="flex-1"
                     >
                       <Copy className="w-3.5 h-3.5" />
                       <span>Reutilizar</span>
-                    </button>
+                    </Button>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => onExportItem(item, 'png')}
-                        className="p-2 text-slate-300 hover:text-white bg-[#1B1E28] hover:bg-[#232734] rounded-lg border border-white/8 transition-colors cursor-pointer"
-                        title="Baixar PNG 2x"
-                        aria-label="Baixar PNG 2x"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDeleteItem(item.id)}
-                        className="p-2 text-slate-400 hover:text-rose-400 bg-[#1B1E28] hover:bg-rose-500/10 rounded-lg border border-white/8 transition-colors cursor-pointer"
-                        title="Excluir da galeria"
-                        aria-label="Excluir da galeria"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Tooltip content="Baixar PNG 2x">
+                        <Button
+                          variant="icon"
+                          size="sm"
+                          onClick={() => onExportItem(item, 'png')}
+                          aria-label="Baixar PNG 2x"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content="Excluir da galeria">
+                        <Button
+                          variant="icon"
+                          size="sm"
+                          onClick={() => onDeleteItem(item.id)}
+                          aria-label="Excluir da galeria"
+                          className="hover:text-rose-400 hover:border-rose-500/30"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </Tooltip>
                     </div>
                   </div>
                 </div>
