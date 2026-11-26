@@ -1,4 +1,13 @@
-export type AspectRatioKey = '16:9' | '4:3' | '1:1';
+export type AspectRatioKey =
+  | '16:9'
+  | '4:3'
+  | '1:1'
+  | '4:5'
+  | '9:16'
+  | '3:4'
+  | '2:3'
+  | '1.91:1'
+  | '3:2';
 
 export type BackgroundPresetKey = 'nullysh-sky' | 'sunset-soft' | 'chrome-dark';
 

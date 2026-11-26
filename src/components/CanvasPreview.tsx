@@ -101,12 +101,13 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
   const hasDraggableContent =
     Boolean(config.extraImageDataUrl) || (config.y2kStickers?.length ?? 0) > 0;
 
-  const aspectContainerClass =
-    config.aspectRatio === '16:9'
-      ? 'aspect-video max-w-[960px]'
-      : config.aspectRatio === '4:3'
-      ? 'aspect-[4/3] max-w-[760px]'
-      : 'aspect-square max-w-[640px]';
+  const isPortrait = spec.height > spec.width;
+  const isSquare = spec.height === spec.width;
+  const aspectContainerClass = isPortrait
+    ? 'max-w-[420px] max-h-[68vh]'
+    : isSquare
+    ? 'max-w-[600px] max-h-[68vh]'
+    : 'max-w-[960px]';
 
   return (
     <div className="flex-1 flex flex-col min-w-0 studio-grid-bg lg:h-[calc(100vh-57px)]">
@@ -116,7 +117,7 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
           <div
             role="group"
             aria-label="Proporção da thumbnail"
-            className="inline-flex items-center p-1 bg-[#15171E] rounded-lg border border-white/10"
+            className="inline-flex flex-wrap items-center gap-0.5 p-1 bg-[#15171E] rounded-lg border border-white/10"
           >
             {(Object.keys(ASPECT_RATIOS) as AspectRatioKey[]).map((key) => {
               const item = ASPECT_RATIOS[key];
@@ -125,8 +126,9 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
                 <button
                   key={key}
                   type="button"
+                  title={`${item.label} — ${item.subtitle} (${item.width}×${item.height})`}
                   onClick={() => onAspectRatioChange(key)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 tabular-nums ${
+                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 tabular-nums ${
                     active
                       ? 'bg-[#7C3AED] text-white'
                       : 'text-slate-400 hover:text-white'
@@ -195,6 +197,7 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
       <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 sm:p-10 overflow-auto">
         <div
           className={`w-full ${aspectContainerClass} rounded-xl overflow-hidden shadow-[0_28px_70px_rgba(0,0,0,0.65)] ring-1 ring-white/15 bg-[#12141B]`}
+          style={{ aspectRatio: `${spec.width} / ${spec.height}` }}
         >
           <canvas
             ref={canvasRef}

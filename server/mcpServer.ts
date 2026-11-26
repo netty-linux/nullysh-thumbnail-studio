@@ -21,7 +21,17 @@ import {
 } from './generationStore.js';
 import { renderThumbnailNode } from './nodeCanvasRenderer.js';
 
-const AspectRatioSchema = z.enum(['16:9', '4:3', '1:1']);
+const AspectRatioSchema = z.enum([
+  '16:9',
+  '4:3',
+  '1:1',
+  '4:5',
+  '9:16',
+  '3:4',
+  '2:3',
+  '1.91:1',
+  '3:2',
+]);
 const BackgroundSchema = z.enum(['nullysh-sky', 'sunset-soft', 'chrome-dark']);
 const BadgeStyleSchema = z.enum(['basefy-dark', 'frost-light']);
 const MockupPositionSchema = z.enum(['left', 'center', 'right']);
@@ -107,7 +117,9 @@ export const GenerateThumbnailInputShape = {
     .boolean()
     .optional()
     .describe('Ativa o pacote Turbo Clickbait (fita, starburst, seta, aura, speedlines, edgeBloom alto)'),
-  aspectRatio: AspectRatioSchema.optional().describe('Proporção: 16:9 (1280x720), 4:3 (1200x900), 1:1 (1080x1080)'),
+  aspectRatio: AspectRatioSchema.optional().describe(
+    'Proporção: 16:9 (1280x720 YouTube/Basefy), 4:3 (1200x900), 1:1 (1080x1080 Quadrado), 4:5 (1080x1350 IG Feed), 9:16 (1080x1920 Reels/TikTok/Shorts/Stories), 3:4 (1080x1440 IG 3:4/Threads), 2:3 (1000x1500 Pinterest), 1.91:1 (1200x628 OG/X/LinkedIn), 3:2 (1200x800 Editorial)'
+  ),
   background: BackgroundSchema.optional().describe('Fundo: nullysh-sky, sunset-soft ou chrome-dark'),
   title: z.string().optional().describe('Título principal em Liquid Chrome 3D (até 2 linhas com \\n)'),
   titleSize: z.number().min(48).max(170).optional().describe('Tamanho da fonte do título (48-170)'),

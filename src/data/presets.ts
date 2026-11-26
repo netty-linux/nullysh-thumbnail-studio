@@ -26,9 +26,51 @@ export const ASPECT_RATIOS: Record<AspectRatioKey, AspectRatioSpec> = {
   '1:1': {
     key: '1:1',
     label: '1:1',
-    subtitle: 'Quadrado Social',
+    subtitle: 'Quadrado Social (IG / LinkedIn)',
     width: 1080,
     height: 1080,
+  },
+  '4:5': {
+    key: '4:5',
+    label: '4:5',
+    subtitle: 'Feed Retrato (Instagram / Meta)',
+    width: 1080,
+    height: 1350,
+  },
+  '9:16': {
+    key: '9:16',
+    label: '9:16',
+    subtitle: 'Reels / TikTok / Shorts / Stories',
+    width: 1080,
+    height: 1920,
+  },
+  '3:4': {
+    key: '3:4',
+    label: '3:4',
+    subtitle: 'Feed Vertical (IG 3:4 / Threads)',
+    width: 1080,
+    height: 1440,
+  },
+  '2:3': {
+    key: '2:3',
+    label: '2:3',
+    subtitle: 'Pinterest Pin',
+    width: 1000,
+    height: 1500,
+  },
+  '1.91:1': {
+    key: '1.91:1',
+    label: '1.91:1',
+    subtitle: 'Link Card / Open Graph / X / LinkedIn',
+    width: 1200,
+    height: 628,
+  },
+  '3:2': {
+    key: '3:2',
+    label: '3:2',
+    subtitle: 'Capa Editorial / Blog / Behance',
+    width: 1200,
+    height: 800,
   },
 };
 
