@@ -232,25 +232,25 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
             {
               value: 'conteudo',
               label: 'Texto',
-              icon: <Type className="w-3.5 h-3.5 shrink-0" />,
+              icon: <Type className="w-3 h-3 shrink-0" />,
               title: 'Conteúdo, presets e textos',
             },
             {
               value: 'visual',
               label: 'Fundo',
-              icon: <ImageIcon className="w-3.5 h-3.5 shrink-0" />,
+              icon: <ImageIcon className="w-3 h-3 shrink-0" />,
               title: 'Fundo, moldura e mockups',
             },
             {
               value: 'elementos',
               label: 'Efeitos',
-              icon: <Sparkles className="w-3.5 h-3.5 shrink-0" />,
+              icon: <Sparkles className="w-3 h-3 shrink-0" />,
               title: 'Bloom e stickers Y2K',
             },
             {
               value: 'clickbait',
               label: 'Clickbait',
-              icon: <Zap className="w-3.5 h-3.5 shrink-0" />,
+              icon: <Zap className="w-3 h-3 shrink-0" />,
               title: 'Ganchos, setas e selos de urgência',
             },
           ]}

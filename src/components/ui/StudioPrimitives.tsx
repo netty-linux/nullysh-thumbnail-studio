@@ -83,7 +83,7 @@ export function SegmentedControl<T extends string>({
   size = 'md',
   className = '',
 }: SegmentedControlProps<T>) {
-  const padClass = size === 'sm' ? 'h-7 px-2 text-[11px]' : 'h-7 px-2.5 text-xs';
+  const padClass = size === 'sm' ? 'h-7 px-1.5 text-[11px] gap-1' : 'h-7 px-2.5 text-xs gap-1.5';
 
   return (
     <div
@@ -107,7 +107,7 @@ export function SegmentedControl<T extends string>({
             aria-selected={active}
             title={opt.title}
             onClick={() => onChange(opt.value)}
-            className={`inline-flex items-center justify-center gap-1.5 font-medium rounded-[var(--radius-sm)] whitespace-nowrap shrink-0 cursor-pointer select-none tabular-nums transition-[background-color,color,box-shadow] duration-150 ${padClass} ${
+            className={`inline-flex items-center justify-center font-medium rounded-[var(--radius-sm)] whitespace-nowrap shrink-0 cursor-pointer select-none tabular-nums transition-[background-color,color,box-shadow] duration-150 ${padClass} ${
               fullWidth ? 'flex-1 min-w-0' : ''
             } ${
               active
