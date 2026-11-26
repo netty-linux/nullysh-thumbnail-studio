@@ -1,22 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BookmarkPlus, Download, Check, Move } from 'lucide-react';
+import { Maximize2, Move, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { ASPECT_RATIOS } from '../data/presets';
 import type { AspectRatioKey, ThumbnailConfig } from '../types/thumbnail';
 import {
   preloadBackgroundAssets,
   renderThumbnailToCanvas,
 } from '../utils/canvasRenderer';
+import { SegmentedControl, Tooltip } from './ui/StudioPrimitives';
 
 interface CanvasPreviewProps {
   config: ThumbnailConfig;
   onSelectSticker: (id: string | null) => void;
   onChange: (patch: Partial<ThumbnailConfig>) => void;
   onAspectRatioChange: (ratio: AspectRatioKey) => void;
-  onExport: (format: 'png' | 'webp') => Promise<void>;
-  onSaveToGallery: () => Promise<void>;
-  isExporting: 'png' | 'webp' | null;
-  isSaving: boolean;
-  justSaved: boolean;
 }
 
 type DragTarget =
@@ -24,20 +20,21 @@ type DragTarget =
   | { kind: 'extra' }
   | null;
 
+type ZoomMode = 'fit' | '100' | '200';
+
+const ZOOM_STEPS: ZoomMode[] = ['fit', '100', '200'];
+
 export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
   config,
   onSelectSticker,
   onChange,
   onAspectRatioChange,
-  onExport,
-  onSaveToGallery,
-  isExporting,
-  isSaving,
-  justSaved,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [assetsReady, setAssetsReady] = useState(false);
   const [dragTarget, setDragTarget] = useState<DragTarget>(null);
+  const [zoomMode, setZoomMode] = useState<ZoomMode>('fit');
+  const [hintDismissed, setHintDismissed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -103,45 +100,58 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
 
   const isPortrait = spec.height > spec.width;
   const isSquare = spec.height === spec.width;
-  const aspectContainerClass = isPortrait
-    ? 'max-w-[420px] max-h-[68vh]'
-    : isSquare
-    ? 'max-w-[600px] max-h-[68vh]'
-    : 'max-w-[960px]';
+
+  const zoomIndex = ZOOM_STEPS.indexOf(zoomMode);
+  const stepZoom = (delta: -1 | 1) => {
+    const nextIdx = Math.max(0, Math.min(ZOOM_STEPS.length - 1, zoomIndex + delta));
+    setZoomMode(ZOOM_STEPS[nextIdx]);
+  };
+
+  const stageStyle: React.CSSProperties =
+    zoomMode === 'fit'
+      ? { aspectRatio: `${spec.width} / ${spec.height}` }
+      : {
+          width: `${Math.round(spec.width * (zoomMode === '200' ? 1.5 : 1))}px`,
+          height: `${Math.round(spec.height * (zoomMode === '200' ? 1.5 : 1))}px`,
+        };
+
+  const fitSizeClass =
+    zoomMode === 'fit'
+      ? isPortrait
+        ? 'w-full max-w-[430px] max-h-[72vh]'
+        : isSquare
+        ? 'w-full max-w-[620px] max-h-[72vh]'
+        : 'w-full max-w-[980px] max-h-[72vh]'
+      : 'shrink-0';
+
+  const ratioOptions = (Object.keys(ASPECT_RATIOS) as AspectRatioKey[]).map((key) => {
+    const item = ASPECT_RATIOS[key];
+    return {
+      value: key,
+      label: item.label,
+      title: `${item.label} · ${item.subtitle} (${item.width}×${item.height})`,
+    };
+  });
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 studio-grid-bg lg:h-[calc(100vh-57px)]">
-      {/* Canvas Studio Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-3.5 bg-[#0D0E12]/90 border-b border-white/10">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div
-            role="group"
-            aria-label="Proporção da thumbnail"
-            className="inline-flex flex-wrap items-center gap-0.5 p-1 bg-[#15171E] rounded-lg border border-white/10"
-          >
-            {(Object.keys(ASPECT_RATIOS) as AspectRatioKey[]).map((key) => {
-              const item = ASPECT_RATIOS[key];
-              const active = config.aspectRatio === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  title={`${item.label} — ${item.subtitle} (${item.width}×${item.height})`}
-                  onClick={() => onAspectRatioChange(key)}
-                  className={`px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 tabular-nums ${
-                    active
-                      ? 'bg-[#7C3AED] text-white'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+    <div className="flex-1 flex flex-col min-w-0 studio-grid-bg h-[calc(100vh-48px)]">
+      {/* Compact Ratio & Zoom Toolbar */}
+      <div className="h-11 flex items-center justify-between gap-3 px-4 bg-[var(--bg-panel)]/95 border-b border-[var(--border-subtle)] shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <SegmentedControl<AspectRatioKey>
+            ariaLabel="Proporção da thumbnail"
+            value={config.aspectRatio}
+            onChange={onAspectRatioChange}
+            options={ratioOptions}
+            tone="accent"
+            size="sm"
+            scrollable
+          />
+        </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono tabular-nums">
-            <span>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden md:flex items-center gap-1.5 text-[11px] text-[var(--text-muted)] font-mono tabular-nums">
+            <span className="text-[var(--text-secondary)]">
               {spec.width}×{spec.height}
             </span>
             <span aria-hidden="true">·</span>
@@ -149,113 +159,154 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
               Saída 2x: {spec.width * 2}×{spec.height * 2}px
             </span>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={onSaveToGallery}
-            disabled={isSaving}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-lg border border-white/12 bg-[#15171E] text-slate-200 hover:border-white/25 hover:text-white transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-50"
+          <div
+            role="group"
+            aria-label="Controles de zoom do preview"
+            className="inline-flex items-center gap-0.5 p-0.5 rounded-[var(--radius-md)] bg-[var(--bg-app)] border border-[var(--border-subtle)]"
           >
-            {justSaved ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Salvo na Galeria</span>
-              </>
-            ) : (
-              <>
-                <BookmarkPlus className="w-3.5 h-3.5" />
-                <span>{isSaving ? 'Salvando...' : 'Salvar na Galeria'}</span>
-              </>
-            )}
-          </button>
+            <Tooltip content="Diminuir zoom">
+              <button
+                type="button"
+                onClick={() => stepZoom(-1)}
+                disabled={zoomIndex === 0}
+                aria-label="Diminuir zoom"
+                className="h-6 w-6 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.04] disabled:opacity-35 cursor-pointer transition-colors"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+            </Tooltip>
 
-          <button
-            type="button"
-            onClick={() => onExport('webp')}
-            disabled={isExporting !== null}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg border border-white/12 bg-[#15171E] text-slate-100 hover:border-[#7C3AED] hover:text-white transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-50"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>{isExporting === 'webp' ? 'Gerando...' : 'WebP 2x'}</span>
-          </button>
+            {(
+              [
+                { id: 'fit', label: 'Ajustar', icon: <Maximize2 className="w-3 h-3" /> },
+                { id: '100', label: '100%' },
+                { id: '200', label: '200%' },
+              ] as { id: ZoomMode; label: string; icon?: React.ReactNode }[]
+            ).map((z) => {
+              const active = zoomMode === z.id;
+              return (
+                <button
+                  key={z.id}
+                  type="button"
+                  onClick={() => setZoomMode(z.id)}
+                  className={`h-6 px-2 text-[11px] font-medium rounded-[var(--radius-sm)] inline-flex items-center gap-1 tabular-nums cursor-pointer transition-colors ${
+                    active
+                      ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] ring-1 ring-white/10'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {z.icon}
+                  <span>{z.label}</span>
+                </button>
+              );
+            })}
 
-          <button
-            type="button"
-            onClick={() => onExport('png')}
-            disabled={isExporting !== null}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-50"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>{isExporting === 'png' ? 'Gerando...' : 'PNG 2x'}</span>
-          </button>
+            <Tooltip content="Aumentar zoom">
+              <button
+                type="button"
+                onClick={() => stepZoom(1)}
+                disabled={zoomIndex === ZOOM_STEPS.length - 1}
+                aria-label="Aumentar zoom"
+                className="h-6 w-6 inline-flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/[0.04] disabled:opacity-35 cursor-pointer transition-colors"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+            </Tooltip>
+          </div>
         </div>
       </div>
 
-      {/* Centered Preview Stage */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 sm:p-10 overflow-auto">
+      {/* Hero Preview Stage */}
+      <div className="relative flex-1 overflow-auto studio-scroll">
         <div
-          className={`w-full ${aspectContainerClass} rounded-xl overflow-hidden shadow-[0_28px_70px_rgba(0,0,0,0.65)] ring-1 ring-white/15 bg-[#12141B]`}
-          style={{ aspectRatio: `${spec.width} / ${spec.height}` }}
+          className={`min-h-full min-w-full flex flex-col items-center justify-center p-6 sm:p-10 ${
+            zoomMode !== 'fit' ? 'w-max' : ''
+          }`}
         >
-          <canvas
-            ref={canvasRef}
-            onPointerDown={(e) => {
-              const pos = getPointerPercent(e.clientX, e.clientY);
-              if (!pos) return;
+          <div
+            className={`relative ${fitSizeClass} rounded-[var(--radius-lg)] overflow-hidden bg-[var(--bg-panel)] transition-[width,height] duration-200`}
+            style={{
+              ...stageStyle,
+              boxShadow: 'var(--shadow-stage)',
+            }}
+          >
+            {!assetsReady && (
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--bg-panel)]/90 animate-pulse"
+              >
+                <span className="text-xs font-medium text-[var(--text-muted)]">
+                  Renderizando preview...
+                </span>
+              </div>
+            )}
 
-              // Hit-test Y2K stickers first (topmost first)
-              const stickers = config.y2kStickers ?? [];
-              for (let i = stickers.length - 1; i >= 0; i--) {
-                const st = stickers[i];
-                const hitRadius = Math.max(7, 8.5 * st.scale);
-                const dist = Math.hypot(pos.x - st.x, pos.y - st.y);
-                if (dist <= hitRadius) {
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  const target: DragTarget = { kind: 'sticker', id: st.id };
-                  setDragTarget(target);
-                  onSelectSticker(st.id);
-                  applyDrag(target, e.clientX, e.clientY);
-                  return;
+            <canvas
+              ref={canvasRef}
+              onPointerDown={(e) => {
+                const pos = getPointerPercent(e.clientX, e.clientY);
+                if (!pos) return;
+
+                const stickers = config.y2kStickers ?? [];
+                for (let i = stickers.length - 1; i >= 0; i--) {
+                  const st = stickers[i];
+                  const hitRadius = Math.max(7, 8.5 * st.scale);
+                  const dist = Math.hypot(pos.x - st.x, pos.y - st.y);
+                  if (dist <= hitRadius) {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    const target: DragTarget = { kind: 'sticker', id: st.id };
+                    setDragTarget(target);
+                    onSelectSticker(st.id);
+                    applyDrag(target, e.clientX, e.clientY);
+                    return;
+                  }
                 }
-              }
 
-              // Fallback to dragging free 2nd image if present
-              if (config.extraImageDataUrl) {
-                e.currentTarget.setPointerCapture(e.pointerId);
-                const target: DragTarget = { kind: 'extra' };
-                setDragTarget(target);
-                applyDrag(target, e.clientX, e.clientY);
-              }
-            }}
-            onPointerMove={(e) => {
-              if (!dragTarget) return;
-              applyDrag(dragTarget, e.clientX, e.clientY);
-            }}
-            onPointerUp={(e) => {
-              if (!dragTarget) return;
-              e.currentTarget.releasePointerCapture(e.pointerId);
-              setDragTarget(null);
-            }}
-            onPointerCancel={() => setDragTarget(null)}
-            className={`w-full h-full block touch-none ${
-              hasDraggableContent
-                ? dragTarget
-                  ? 'cursor-grabbing'
-                  : 'cursor-grab'
-                : ''
-            }`}
-            aria-label="Preview em tempo real da thumbnail Nullysh"
-          />
+                if (config.extraImageDataUrl) {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  const target: DragTarget = { kind: 'extra' };
+                  setDragTarget(target);
+                  applyDrag(target, e.clientX, e.clientY);
+                }
+              }}
+              onPointerMove={(e) => {
+                if (!dragTarget) return;
+                applyDrag(dragTarget, e.clientX, e.clientY);
+              }}
+              onPointerUp={(e) => {
+                if (!dragTarget) return;
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                setDragTarget(null);
+              }}
+              onPointerCancel={() => setDragTarget(null)}
+              className={`w-full h-full block touch-none ${
+                hasDraggableContent
+                  ? dragTarget
+                    ? 'cursor-grabbing'
+                    : 'cursor-grab'
+                  : ''
+              }`}
+              aria-label="Preview em tempo real da thumbnail Nullysh"
+            />
+          </div>
         </div>
 
-        {hasDraggableContent && (
-          <div className="inline-flex items-center gap-2 text-xs text-slate-400">
-            <Move className="w-3.5 h-3.5 text-[#A78BFA]" />
-            <span>
-              Clique e arraste stickers Y2K ou a 2ª imagem diretamente no preview para reposicionar
-            </span>
+        {/* Floating subtle drag hint */}
+        {hasDraggableContent && !hintDismissed && (
+          <div className="pointer-events-none sticky bottom-4 inset-x-0 flex justify-center px-4">
+            <div className="pointer-events-auto inline-flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full bg-[var(--bg-elevated)]/95 border border-[var(--border-subtle)] shadow-[var(--shadow-soft)] text-[11px] text-[var(--text-secondary)]">
+              <Move className="w-3 h-3 text-[var(--accent-text)] shrink-0" />
+              <span>Arraste stickers Y2K ou a 2ª imagem direto no preview</span>
+              <button
+                type="button"
+                onClick={() => setHintDismissed(true)}
+                aria-label="Dispensar dica"
+                className="p-0.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         )}
       </div>
