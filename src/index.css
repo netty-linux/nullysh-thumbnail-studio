@@ -2,28 +2,80 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-display: "Fredoka", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  /* 3-level dark surface hierarchy */
+  --bg-app: #090a0d;
+  --bg-panel: #0e1015;
+  --bg-elevated: #151821;
+  --bg-hover: #1c202b;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Typography */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #7b8698;
+
+  /* Accent */
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: rgba(124, 58, 237, 0.16);
+  --accent-border: rgba(167, 139, 250, 0.45);
+  --accent-text: #c4b5fd;
+
+  /* Radii & Shadows */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow-stage: 0 28px 80px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 @layer base {
   html,
   body {
-    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-    background-color: #0D0E12;
-    color: #F1F5F9;
+    font-family: var(--font-sans);
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    overflow-x: clip;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 
-/* Studio range input */
+/* Studio range input with filled progress track */
 input[type="range"].studio-range {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.12);
-  outline: none;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--range-progress, 0%),
+    rgba(255, 255, 255, 0.12) var(--range-progress, 0%),
+    rgba(255, 255, 255, 0.12) 100%
+  );
   cursor: pointer;
+}
+
+input[type="range"].studio-range:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 4px var(--accent);
 }
 
 input[type="range"].studio-range::-webkit-slider-thumb {
@@ -32,30 +84,31 @@ input[type="range"].studio-range::-webkit-slider-thumb {
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  background: #7C3AED;
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #ffffff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease;
 }
 
 input[type="range"].studio-range::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
+  transform: scale(1.14);
 }
 
 input[type="range"].studio-range::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  background: #7C3AED;
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  background: #ffffff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
   cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Studio subtle scrollbar */
+/* Subtle scrollbars */
 .studio-scroll::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .studio-scroll::-webkit-scrollbar-track {
@@ -68,12 +121,33 @@ input[type="range"].studio-range::-moz-range-thumb {
 }
 
 .studio-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.24);
 }
 
-/* Studio canvas dot grid */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Studio canvas dot grid with soft vignette */
 .studio-grid-bg {
-  background-color: #090A0D;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-color: var(--bg-app);
+  background-image:
+    radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.48) 100%),
+    radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 100% 100%, 18px 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
