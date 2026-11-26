@@ -1,0 +1,6 @@
+{
+  "name": "Nullysh Thumbnail Studio",
+  "description": "Gerador de thumbnails Y2K Chrome e Liquid Metal para produtos digitais da loja Nullysh na plataforma Basefy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
