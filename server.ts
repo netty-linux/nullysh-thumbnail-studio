@@ -87,7 +87,15 @@ async function startServer() {
     try {
       if (sessionId) {
         const existing = streamableSessions.get(sessionId);
-        if (!existing) {
+        if (existing) {
+          existing.baseUrl = reqBaseUrl;
+          await existing.transport.handleRequest(req, res, req.body);
+          return;
+        }
+        // Recover transparently if server restarted/redeployed and client still sends old Mcp-Session-Id
+        if (req.method === 'POST') {
+          delete req.headers['mcp-session-id'];
+        } else {
           res.status(404).json({
             jsonrpc: '2.0',
             error: {
@@ -98,9 +106,6 @@ async function startServer() {
           });
           return;
         }
-        existing.baseUrl = reqBaseUrl;
-        await existing.transport.handleRequest(req, res, req.body);
-        return;
       }
 
       if (req.method === 'POST' && isInitializeRequest(req.body)) {
